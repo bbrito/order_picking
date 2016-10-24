@@ -1,0 +1,24 @@
+<launch>
+  <!-- Debug Info -->
+  <arg name="debug" default="false" />
+  <arg unless="$(arg debug)" name="launch_prefix" value="" />
+  <arg     if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args" />
+
+  <!-- Simulation -->
+  <include file="$(find cob_bringup_sim)/launch/robot.launch">
+    <arg name="robot" value="raw3-1"/>
+    <arg name="robot_env" value="empty"/>
+  </include>
+
+  <!-- MoveIt -->
+  <include file="$(find cob_moveit_config)/launch/move_group_rviz.launch">
+    <arg name="robot" value="raw3-1"/>
+  </include>
+
+  <node name="MoveTo" pkg="order_picking" type="order_picking_node" respawn="false" launch-prefix="$(arg launch_prefix)" output="screen">
+    <rosparam command="load" file="$(find cob_moveit_config)/raw3-1/config/kinematics.yaml"/>
+    <param name="/planning_plugin" value="ompl_interface/OMPLPlanner"/>
+    <rosparam command="load" file="$(find cob_moveit_config)/raw3-1/config/ompl_planning.yaml"/>
+  </node>
+
+</launch>
