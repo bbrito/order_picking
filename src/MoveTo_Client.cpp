@@ -2,7 +2,7 @@
  * MoveTo_Client.cpp
  *
  *  Created on: Oct 21, 2016
- *      Author: bbrito
+ *    Author: bbrito
  */
 #include <order_picking/ArmPlanner.h>
 #include <actionlib/client/simple_action_client.h>
@@ -17,6 +17,48 @@ int main (int argc, char **argv)
   // true causes the client to spin its own thread
   actionlib::SimpleActionClient<order_picking::PlanToAction> ac("PlanTo", true);
   actionlib::SimpleActionClient<order_picking::MoveToAction> ab("MoveTo", true);
+
+  /*Testing Service Client*/
+
+    ros::ServiceClient client = nh.serviceClient<order_picking::AddColisionObject>("Add_Obstacle");
+    order_picking::AddColisionObject srv;
+    srv.request.name_object="obstacle";
+    srv.request.dim.x = 0.5;
+    srv.request.dim.y = 0.5;
+    srv.request.dim.z = 0.5;
+    srv.request.CoM.header.frame_id="odom_combined";
+    srv.request.CoM.pose.position.x =  0;
+    srv.request.CoM.pose.position.y =2;
+    srv.request.CoM.pose.position.z = 0 ;
+    if (client.call(srv))
+    {
+      ROS_INFO("Sum: %s", srv.response.attached ? "true" : "false");
+    }
+    else
+    {
+      ROS_ERROR("Failed to call service add_two_ints");
+      return 1;
+    }
+    ros::ServiceClient client2 = nh.serviceClient<order_picking::AddColisionObject>("Attach_Obstacle");
+    order_picking::AddColisionObject srv2;
+    srv2.request.name_object="object";
+    srv2.request.dim.x = 0.15;
+    srv2.request.dim.y = 0.15;
+    srv2.request.dim.z = 0.15;
+    srv2.request.CoM.header.frame_id="arm_ee_link";
+    srv2.request.CoM.pose.position.x =  srv2.request.dim.x/2;
+    srv2.request.CoM.pose.position.y =0;
+    srv2.request.CoM.pose.position.z = 0;
+    if (client2.call(srv2))
+    {
+      ROS_INFO("Sum: %s", srv2.response.attached ? "true" : "false");
+    }
+    else
+    {
+      ROS_ERROR("Failed to call service add_two_ints");
+      return 1;
+    }
+
 
   ROS_INFO("Waiting for action server to start.");
   // wait for the action server to start
@@ -34,7 +76,7 @@ int main (int argc, char **argv)
   pose.header.frame_id = "arm_ee_link";
   pose.pose.position.x = -0.268;
   pose.pose.position.y = -0.880;
-  pose.pose.position.z =0.979;
+  pose.pose.position.z =0.979+0.2;
  /* pose.pose.orientation.x = 0.921;
   pose.pose.orientation.y = -0.389;
   pose.pose.orientation.z = 0.0;*/
@@ -55,6 +97,21 @@ int main (int argc, char **argv)
   }
   else
     ROS_INFO("Action did not finish before the time out.");
+
+  sleep(10.0);
+  ros::ServiceClient client3 = nh.serviceClient<order_picking::AddColisionObject>("Detach_Obstacle");
+      order_picking::AddColisionObject srv3;
+
+      if (client3.call(srv3))
+      {
+        ROS_INFO("Removed: %s", srv.response.attached ? "true" : "false");
+      }
+      else
+      {
+        ROS_ERROR("Failed to remove");
+        return 1;
+      }
+
 
   //exit
   return 0;

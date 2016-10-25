@@ -13,6 +13,7 @@
 #include <actionlib/server/simple_action_server.h>
 #include <order_picking/MoveToAction.h>
 #include <order_picking/PlanToAction.h>
+#include <order_picking/AddColisionObject.h>
 
 // MoveIt!
 #include <moveit/move_group_interface/move_group.h>
@@ -33,6 +34,11 @@ protected:
   ros::NodeHandle nh_;
 
   ros::Publisher display_publisher;
+
+  ros::ServiceServer add_obstacle;
+  ros::ServiceServer attach_object;
+  ros::ServiceServer detach_object;
+
   // NodeHandle instance must be created before this line. Otherwise strange error may occur.
   actionlib::SimpleActionServer<order_picking::MoveToAction> move_to_;
 
@@ -51,9 +57,17 @@ protected:
   boost::scoped_ptr<move_group_interface::MoveGroup> group;
   moveit_msgs::DisplayTrajectory display_trajectory;
   moveit::planning_interface::MoveGroup::Plan my_plan;
+  moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
   bool success;
 
   geometry_msgs::Pose target_pos;
+
+  //MoveIt Colision Objects
+  moveit_msgs::CollisionObject collision_object;
+  std::vector<moveit_msgs::CollisionObject> collision_objects;
+  moveit_msgs::CollisionObject object;
+  std::vector<moveit_msgs::CollisionObject> attach_objects;
+  std::vector<std::string> object_ids;
 
 public:
 
@@ -64,6 +78,8 @@ public:
 
 	nh_.setParam("/global_param",name);
 	nh_.setParam("/planning_plugin","ompl_interface/OMPLPlanner");
+	//Publications
+
 	display_publisher = nh_.advertise<moveit_msgs::DisplayTrajectory>("/move_group/display_planned_path", 1, true);
 	group.reset(new moveit::planning_interface::MoveGroup("arm"));
     plan_to_.start();
@@ -77,6 +93,12 @@ public:
   int move(const order_picking::MoveToGoalConstPtr &goal);
 
   int plan(const order_picking::PlanToGoalConstPtr &goal);
+
+  bool addcolisionobject(order_picking::AddColisionObject::Request & req , order_picking::AddColisionObject::Response & res);
+
+  bool attachobject(order_picking::AddColisionObject::Request & req , order_picking::AddColisionObject::Response & res);
+
+  bool detachobject(order_picking::AddColisionObject::Request & req , order_picking::AddColisionObject::Response & res);
 
 };
 

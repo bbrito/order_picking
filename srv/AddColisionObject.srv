@@ -1,0 +1,5 @@
+string name_object
+geometry_msgs/PoseStamped CoM
+geometry_msgs/Vector3 dim
+---
+bool attached

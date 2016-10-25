@@ -40,11 +40,9 @@ int ArmPlanner::move(const order_picking::MoveToGoalConstPtr &goal)
 
 bool ArmPlanner::initialize(){
 
-
-	/* Sleep a little to allow time to startup rviz, etc. */
-	ROS_INFO("3");
-	ros::WallDuration sleep_time(5.0);
-	sleep_time.sleep();
+	add_obstacle = nh_.advertiseService("Add_Obstacle",&ArmPlanner::addcolisionobject,this);
+	attach_object = nh_.advertiseService("Attach_Obstacle",&ArmPlanner::attachobject,this);
+	detach_object = nh_.advertiseService("Detach_Obstacle",&ArmPlanner::detachobject,this);
 
 }
 
@@ -113,5 +111,108 @@ int ArmPlanner::plan(const order_picking::PlanToGoalConstPtr &goal){
 	  plan_to_.setSucceeded(plan_result_);
 
 
+
+}
+
+bool ArmPlanner::addcolisionobject(order_picking::AddColisionObject::Request & req , order_picking::AddColisionObject::Response & res){
+
+	collision_object.header.frame_id = req.CoM.header.frame_id;
+
+	ROS_INFO("Planning frame is %s", collision_object.header.frame_id.c_str());
+	/* The id of the object is used to identify it. */
+	collision_object.id = req.name_object;
+
+	/* Define a box to add to the world.*/
+	shape_msgs::SolidPrimitive primitive;
+	primitive.type = primitive.BOX;
+	primitive.dimensions.resize(3);
+	primitive.dimensions[0] = req.dim.x;
+	primitive.dimensions[1] = req.dim.y;
+	primitive.dimensions[2] = req.dim.z;
+
+	/* A pose for the box (specified relative to frame_id)*/
+	geometry_msgs::Pose box_pose;
+	box_pose.orientation.w = req.CoM.pose.orientation.w;
+	box_pose.position.x =  req.CoM.pose.position.x;
+	box_pose.position.y = req.CoM.pose.position.y;
+	box_pose.position.z =  req.CoM.pose.position.z;
+	ROS_INFO("Add an obstacle with dimensions:%f %f %f",primitive.dimensions[0],primitive.dimensions[1],primitive.dimensions[2]);
+	collision_object.primitives.push_back(primitive);
+	collision_object.primitive_poses.push_back(box_pose);
+	collision_object.operation = collision_object.ADD;
+
+
+	collision_objects.push_back(collision_object);
+
+	ROS_INFO("Add an obstacle into the world");
+	planning_scene_interface.addCollisionObjects(collision_objects);
+
+	res.attached=true;
+	sleep(2.0);
+	return true;
+
+}
+
+bool ArmPlanner::attachobject(order_picking::AddColisionObject::Request & req , order_picking::AddColisionObject::Response & res){
+
+	object.header.frame_id = req.CoM.header.frame_id;
+
+	ROS_INFO("Planning frame is %s", object.header.frame_id.c_str());
+	/* The id of the object is used to identify it. */
+	object.id = req.name_object;
+
+	/* Define a box to add to the world.*/
+	shape_msgs::SolidPrimitive primitive;
+	primitive.type = primitive.BOX;
+	primitive.dimensions.resize(3);
+	primitive.dimensions[0] = req.dim.x;
+	primitive.dimensions[1] = req.dim.y;
+	primitive.dimensions[2] = req.dim.z;
+
+	/* A pose for the box (specified relative to frame_id)*/
+	geometry_msgs::Pose box_pose;
+	box_pose.orientation.w = req.CoM.pose.orientation.w;
+	box_pose.position.x =  req.CoM.pose.position.x;
+	box_pose.position.y = req.CoM.pose.position.y;
+	box_pose.position.z =  req.CoM.pose.position.z;
+	ROS_INFO("Add an object with dimensions:%f %f %f",primitive.dimensions[0],primitive.dimensions[1],primitive.dimensions[2]);
+	object.primitives.push_back(primitive);
+	object.primitive_poses.push_back(box_pose);
+	object.operation = object.ADD;
+
+	attach_objects.clear();
+	attach_objects.push_back(object);
+
+	ROS_INFO("Add an object into the world");
+	planning_scene_interface.addCollisionObjects(attach_objects);
+
+	ROS_INFO("Attach the object to the robot");
+	group->attachObject(object.id);
+	/* Sleep to give Rviz time to show the object attached (different color). */
+	sleep(4.0);
+
+	res.attached=true;
+	/* Sleep so we have time to see the object in RViz */
+	sleep(2.0);
+	return true;
+
+}
+
+bool ArmPlanner::detachobject(order_picking::AddColisionObject::Request & req , order_picking::AddColisionObject::Response & res){
+
+	ROS_INFO("Detach the object from the robot");
+	group->detachObject(object.id);
+	/* Sleep to give Rviz time to show the object detached. */
+	sleep(1.0);
+
+	ROS_INFO("Remove the object from the world");
+	object_ids.clear();
+	object_ids.push_back(object.id);
+	planning_scene_interface.removeCollisionObjects(object_ids);
+	/* Sleep to give Rviz time to show the object is no longer there. */
+	sleep(2.0);
+
+	res.attached=true;
+	return true;
 
 }
