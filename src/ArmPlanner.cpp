@@ -187,6 +187,7 @@ bool ArmPlanner::attachobject(order_picking::AddColisionObject::Request & req , 
 	planning_scene_interface.addCollisionObjects(attach_objects);
 
 	ROS_INFO("Attach the object to the robot");
+	object_ids.push_back(object.id);
 	group->attachObject(object.id);
 	/* Sleep to give Rviz time to show the object attached (different color). */
 	sleep(4.0);
@@ -205,7 +206,7 @@ bool ArmPlanner::detachobject(order_picking::AddColisionObject::Request & req , 
 	/* Sleep to give Rviz time to show the object detached. */
 	sleep(1.0);
 
-	ROS_INFO("Remove the object from the world");
+	ROS_INFO("Remove the object from the robot");
 	object_ids.clear();
 	object_ids.push_back(object.id);
 	planning_scene_interface.removeCollisionObjects(object_ids);
@@ -213,6 +214,29 @@ bool ArmPlanner::detachobject(order_picking::AddColisionObject::Request & req , 
 	sleep(2.0);
 
 	res.attached=true;
+	return true;
+
+}
+
+bool ArmPlanner::removeobject(order_picking::RemoveObject::Request & req , order_picking::RemoveObject::Response & res){
+
+	ROS_INFO("Remove the object from the robot");
+
+	remove_object_ids.clear();
+
+
+	for (int i=0;i<object_ids.size();i++)
+	{
+		std::size_t found = object_ids[i].find(req.name_object);
+		if (found!=std::string::npos)
+			remove_object_ids.push_back(object_ids[i]);
+	}
+
+	planning_scene_interface.removeCollisionObjects(remove_object_ids);
+		/* Sleep to give Rviz time to show the object is no longer there. */
+	sleep(2.0);
+
+	res.removed=true;
 	return true;
 
 }

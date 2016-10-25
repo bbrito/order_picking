@@ -68,6 +68,7 @@ add_service_files(
    srv
    FILES
    AddColisionObject.srv
+   RemoveObject.srv
 )
 
 

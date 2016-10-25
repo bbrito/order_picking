@@ -14,6 +14,7 @@
 #include <order_picking/MoveToAction.h>
 #include <order_picking/PlanToAction.h>
 #include <order_picking/AddColisionObject.h>
+#include <order_picking/RemoveObject.h>
 
 // MoveIt!
 #include <moveit/move_group_interface/move_group.h>
@@ -38,6 +39,7 @@ protected:
   ros::ServiceServer add_obstacle;
   ros::ServiceServer attach_object;
   ros::ServiceServer detach_object;
+  ros::ServiceServer remove_object;
 
   // NodeHandle instance must be created before this line. Otherwise strange error may occur.
   actionlib::SimpleActionServer<order_picking::MoveToAction> move_to_;
@@ -68,6 +70,7 @@ protected:
   moveit_msgs::CollisionObject object;
   std::vector<moveit_msgs::CollisionObject> attach_objects;
   std::vector<std::string> object_ids;
+  std::vector<std::string> remove_object_ids;
 
 public:
 
@@ -99,6 +102,8 @@ public:
   bool attachobject(order_picking::AddColisionObject::Request & req , order_picking::AddColisionObject::Response & res);
 
   bool detachobject(order_picking::AddColisionObject::Request & req , order_picking::AddColisionObject::Response & res);
+
+  bool removeobject(order_picking::RemoveObject::Request & req , order_picking::RemoveObject::Response & res);
 
 };
 
