@@ -59,8 +59,9 @@ int ArmPlanner::plan(const order_picking::PlanToGoalConstPtr &goal){
 	plan_to_.setPreempted();
 	success = false;
 	}
-
+	group->setPoseReferenceFrame("base_link");
 	// We can print the name of the reference frame for this robot.
+	//group->setPlanningFrame("base_link");
 	ROS_INFO("Reference frame: %s", group->getPlanningFrame().c_str());
 
 	// We can also print the name of the end-effector link for this group.
@@ -94,23 +95,20 @@ int ArmPlanner::plan(const order_picking::PlanToGoalConstPtr &goal){
 	      display_publisher.publish(display_trajectory);
 	      /* Sleep to give Rviz time to visualize the plan. */
 	      sleep(5.0);
+
+	      // publish the feedback
+	      	  plan_to_.publishFeedback(plan_feedback_);
+	      	  // this sleep is not necessary, the sequence is computed at 1 Hz for demonstration purposes
+	      	  //r.sleep();
+
+
+	      	//if(feedback_.actual_pos==goal->position)
+
+	      	  //plan_result_.got_plan = success;
+	      	  ROS_INFO("%s: Succeeded", action_name_.c_str());
+	      	  // set the action state to succeeded
+	      	  //plan_to_.setSucceeded(plan_result_);
 	    }
-
-
-	  // publish the feedback
-	  plan_to_.publishFeedback(plan_feedback_);
-	  // this sleep is not necessary, the sequence is computed at 1 Hz for demonstration purposes
-	  //r.sleep();
-
-
-	//if(feedback_.actual_pos==goal->position)
-
-	  plan_result_.got_plan = success;
-	  ROS_INFO("%s: Succeeded", action_name_.c_str());
-	  // set the action state to succeeded
-	  plan_to_.setSucceeded(plan_result_);
-
-
 
 }
 
